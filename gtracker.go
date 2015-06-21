@@ -57,7 +57,7 @@ func runDaemon() {
     signal.Notify(signalChan, os.Interrupt)
     go func() {
         for _ = range signalChan {
-            common.Log.Info("nReceived an interrupt, stopping...")
+            common.Log.Info("Received an interrupt, stopping...")
             common.SaveAppInfo(currentApp)
             os.Exit(0)
         }
@@ -78,7 +78,7 @@ func runDaemon() {
             currentApp.Name, currentApp.WindowName = appName, windowName
             common.Log.Info(fmt.Sprintf("App=\"%s\"    Window=\"%s\"    Running=%vs", currentApp.Name, currentApp.WindowName, currentApp.RunningTime))
         } else {
-            println("locked")
+            common.Log.Info("Locked")
         }
         time.Sleep(1000 * time.Millisecond)
     }
