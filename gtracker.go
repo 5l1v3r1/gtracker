@@ -2,8 +2,8 @@ package main
 
 import (
     "os"
-    "os/signal"
     "fmt"
+    "os/signal"
     "time"
     "flag"
     "runtime"
@@ -57,12 +57,13 @@ func runDaemon() {
     signal.Notify(signalChan, os.Interrupt)
     go func() {
         for _ = range signalChan {
-            fmt.Println("\nReceived an interrupt, stopping...\n")
+            common.Log.Info("nReceived an interrupt, stopping...")
             common.SaveAppInfo(currentApp)
             os.Exit(0)
         }
     }()
 
+    common.Log.Info("Daemon started")
     for true {
         if isLocked() == false {
             appName, windowName := getCurrentAppInfo()
@@ -75,7 +76,7 @@ func runDaemon() {
                 currentApp.RunningTime += 1
             }
             currentApp.Name, currentApp.WindowName = appName, windowName
-            println(fmt.Sprintf("App: \"%s\", Window: \"%s\", Running: %vs", currentApp.Name, currentApp.WindowName, currentApp.RunningTime))
+            common.Log.Info(fmt.Sprintf("App=\"%s\"    Window=\"%s\"    Running=%vs", currentApp.Name, currentApp.WindowName, currentApp.RunningTime))
         } else {
             println("locked")
         }

@@ -1,13 +1,14 @@
 package common
 
 import (
-    "log"
     "time"
     "database/sql"
     "os"
     "os/user"
     "path"
 
+    "github.com/Sirupsen/logrus"
+    "github.com/rifflock/lfshook"
     _ "github.com/mattn/go-sqlite3"
 
     "../settings"
@@ -21,10 +22,12 @@ type CurrentApp struct {
     StartTime int64
 }
 
+var Log = logrus.New()
+
 
 func CheckError(err error) {
     if err != nil {
-        log.Fatal(err)
+        Log.Fatal(err)
     }
 }
 
@@ -63,4 +66,12 @@ func SaveAppInfo(app CurrentApp) {
     CheckError(err)
     _, _ = query.Exec(app.Name, app.WindowName, app.RunningTime, app.StartTime, time.Now().Unix())
     tx.Commit()
+}
+
+
+func init() {
+    Log.Hooks.Add(lfshook.NewHook(lfshook.PathMap{
+        logrus.InfoLevel :  path.Join(GetWorkDir(), "gtracker.log"),
+        logrus.ErrorLevel : path.Join(GetWorkDir(), "gtracker.log"),
+    }))
 }
