@@ -27,7 +27,8 @@ install-go-requirements:
 	"github.com/mattn/go-sqlite3" \
 	"github.com/syohex/go-texttable" \
 	"github.com/jinzhu/now" \
-	"github.com/mvdan/xurls"
+	"github.com/Sirupsen/logrus" \
+	"github.com/rifflock/lfshook"
 
 
 build:
