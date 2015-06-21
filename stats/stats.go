@@ -63,7 +63,8 @@ func ShowForRange(startDateStr string, endDateStr string, formatter string) {
 
 func getStatsForCondition(whereCondition string, formatter string) {
     db, err := sql.Open("sqlite3", path.Join(common.GetWorkDir(), settings.DatabaseName))
-    var queryStr = fmt.Sprintf("select name, windowName, runningTime, startTime, endTime from apps WHERE %s", whereCondition)
+    defer db.Close()
+    var queryStr = fmt.Sprintf("SELECT name, windowName, runningTime, startTime, endTime FROM apps WHERE %s", whereCondition)
     rows, err := db.Query(queryStr)
     if err != nil {
         log.Fatal(err)
@@ -88,7 +89,6 @@ func getStatsForCondition(whereCondition string, formatter string) {
         "simple": statsSimplePrinter,
     }
     formatters[formatter](stats)
-    defer db.Close()
 }
 
 

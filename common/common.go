@@ -50,19 +50,19 @@ func InitDatabase() {
 
 func SaveAppInfo(app CurrentApp) {
     db, err := sql.Open("sqlite3", path.Join(GetWorkDir(), settings.DatabaseName))
+    defer db.Close()
     if err != nil {
         log.Fatal(err)
     }
-    defer db.Close()
     tx, err := db.Begin()
     if err != nil {
         log.Fatal(err)
     }
     query, _ := tx.Prepare("INSERT INTO apps(name, windowName, runningTime, startTime, endTime) VALUES(?, ?, ?, ?, ?)")
+    defer query.Close()
     if err != nil {
         log.Fatal(err)
     }
-    defer query.Close()
     _, _ = query.Exec(app.Name, app.WindowName, app.RunningTime, app.StartTime, time.Now().Unix())
     tx.Commit()
 }

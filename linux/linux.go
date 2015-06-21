@@ -76,11 +76,11 @@ func IsLocked() (bool) {
 
 func getIdleTime() (uint32, error) {
     X, err := xgb.NewConn()
+    defer X.Close()
     screensaver.Init(X)
     if err != nil {
         return 0, err
     }
-    defer X.Close()
     screenRoot := xproto.Drawable(xproto.Setup(X).DefaultScreen(X).Root)
 
     reply, err := screensaver.QueryInfo(X, screenRoot).Reply()

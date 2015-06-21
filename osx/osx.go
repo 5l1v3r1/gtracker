@@ -13,19 +13,15 @@ import (
 
 
 const isLockedAppleScript = `tell application "System Events"
-          tell screen saver preferences
-                    if running then
-                        return true
-                    end if
-          end tell
+  tell screen saver preferences
+    if running then
+        return true
+    end if
+  end tell
 end tell
 return false`
 
-const currentAppAppleScript = `tell application "System Events"
-    item 1 of (get name of processes whose frontmost is true)
-end tell`
-
-const currentWindowAppleScript = `tell application "System Events"
+const frontAppAndWindowAppleScript = `tell application "System Events"
     set frontApp to name of first application process whose frontmost is true
 end tell
 tell application frontApp
@@ -36,13 +32,16 @@ tell application frontApp
     on error error_message number error_number
         set window_name to frontApp
     end try
-end tell`
+end tell
+set result to frontApp & "###" & window_name
+return result
+`
 
 
 func GetCurrentAppInfo() (string, string) {
-    appName, _ := runAppleScript(currentAppAppleScript)
-    windowName, _ := runAppleScript(currentWindowAppleScript)
-    return appName, windowName
+    appAndWindowStr, _ := runAppleScript(frontAppAndWindowAppleScript)
+    splitted := strings.Split(appAndWindowStr, "###")
+    return splitted[0], strings.Join(splitted[1:], "###")
 }
 
 
