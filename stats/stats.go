@@ -12,36 +12,37 @@ import (
     _ "github.com/mattn/go-sqlite3"
     "github.com/syohex/go-texttable"
     "github.com/jinzhu/now"
+    // "github.com/mvdan/xurls"
 
     "../settings"
     "../common"
 )
 
 
-func LastWeekStats(formatter string) {
+func LastWeekStats(formatter string, filterByName string, filterByWindow string, groupByWindow bool) {
     now.FirstDayMonday = true
     weekBeginningTimestamp := strconv.FormatInt(now.BeginningOfWeek().Unix(), 10)
     condition := fmt.Sprintf("startTime >= %s", weekBeginningTimestamp)
-    getStatsForCondition(condition, formatter)
+    getStatsForCondition(condition, formatter, filterByName, filterByWindow, groupByWindow)
 }
 
 
-func TodayStats(formatter string) {
+func TodayStats(formatter string, filterByName string, filterByWindow string, groupByWindow bool) {
     todayBeginningTimestamp := strconv.FormatInt(now.BeginningOfDay().Unix(), 10)
     condition := fmt.Sprintf("startTime >= %s", todayBeginningTimestamp)
-    getStatsForCondition(condition, formatter)
+    getStatsForCondition(condition, formatter, filterByName, filterByWindow, groupByWindow)
 }
 
 
-func YesterdayStats(formatter string) {
+func YesterdayStats(formatter string, filterByName string, filterByWindow string, groupByWindow bool) {
     todayBeginningTimestamp := strconv.FormatInt(now.BeginningOfDay().Unix(), 10)
     yesterdayBeginningTimestamp := strconv.FormatInt(now.BeginningOfDay().Unix() - 24*60*60, 10)
     condition := fmt.Sprintf("startTime >= %s AND endTime <= %s", yesterdayBeginningTimestamp, todayBeginningTimestamp)
-    getStatsForCondition(condition, formatter)
+    getStatsForCondition(condition, formatter, filterByName, filterByWindow, groupByWindow)
 }
 
 
-func ShowForRange(startDateStr string, endDateStr string, formatter string) {
+func ShowForRange(startDateStr string, endDateStr string, formatter string, filterByName string, filterByWindow string, groupByWindow bool) {
     startDate, startDateError := now.Parse(startDateStr)
     endDate, endDateError := now.Parse(endDateStr)
     if startDateError != nil && endDateError != nil {
@@ -57,18 +58,22 @@ func ShowForRange(startDateStr string, endDateStr string, formatter string) {
     if endDateError == nil {
         condition = fmt.Sprintf("%s endTime <= %s", condition, strconv.FormatInt(endDate.Unix(), 10))
     }
-    getStatsForCondition(condition, formatter)
+    getStatsForCondition(condition, formatter, filterByName, filterByWindow, groupByWindow)
 }
 
 
-func getStatsForCondition(whereCondition string, formatter string) {
+func getStatsForCondition(whereCondition string, formatter string, filterByName string, filterByWindow string, groupByWindow bool) {
     db, err := sql.Open("sqlite3", path.Join(common.GetWorkDir(), settings.DatabaseName))
     defer db.Close()
     var queryStr = fmt.Sprintf("SELECT name, windowName, runningTime, startTime, endTime FROM apps WHERE %s", whereCondition)
-    rows, err := db.Query(queryStr)
-    if err != nil {
-        log.Fatal(err)
+    if filterByName != "" {
+        queryStr = fmt.Sprintf("%s %s", queryStr, "AND name LIKE '%" + filterByName + "%'")
     }
+    if filterByWindow != "" {
+        queryStr = fmt.Sprintf("%s %s", queryStr, "AND windowName LIKE '%" + filterByWindow + "%'")
+    }
+    rows, err := db.Query(queryStr)
+    common.CheckError(err)
     var stats map[string]int64
     stats = make(map[string]int64)
     for rows.Next() {
@@ -78,11 +83,15 @@ func getStatsForCondition(whereCondition string, formatter string) {
         var startTime time.Time
         var endTime time.Time
         rows.Scan(&name, &windowName, &runningTime, &startTime, &endTime)
-        _, exists := stats[name]
-        if !exists {
-            stats[name] = 0
+        key := name
+        if groupByWindow {
+            key = windowName
         }
-        stats[name] += int64(runningTime)
+        _, exists := stats[key]
+        if !exists {
+            stats[key] = 0
+        }
+        stats[key] += int64(runningTime)
     }
     formatters := map[string]func(stats map[string]int64){
         "pretty": statsPrettyTablePrinter,

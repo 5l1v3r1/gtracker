@@ -93,6 +93,10 @@ var startDate = flag.String("start-date", "", "Show stats from date")
 var endDate = flag.String("end-date", "", "Show stats to date")
 var formatter = flag.String("formatter", "pretty", "Formatter to use (simple, pretty)")
 
+var filterByNameStr = flag.String("name", "", "Filter by name")
+var filterByWindowStr = flag.String("window", "", "Filter by window")
+var groupByWindow = flag.Bool("group-by-window", false, "Group by window name")
+
 
 func main() {
     flag.Parse()
@@ -102,18 +106,18 @@ func main() {
     }
 
     if *showTodayStats {
-        stats.TodayStats(*formatter)
+        stats.TodayStats(*formatter, *filterByNameStr, *filterByWindowStr, *groupByWindow)
     }
 
     if *showYesterdayStats {
-        stats.YesterdayStats(*formatter)
+        stats.YesterdayStats(*formatter, *filterByNameStr, *filterByWindowStr, *groupByWindow)
     }
 
     if *showWeekStats {
-        stats.LastWeekStats(*formatter)
+        stats.LastWeekStats(*formatter, *filterByNameStr, *filterByWindowStr, *groupByWindow)
     }
 
     if *startDate != "" || *endDate != "" {
-        stats.ShowForRange(*startDate, *endDate, *formatter)
+        stats.ShowForRange(*startDate, *endDate, *formatter, *filterByNameStr, *filterByWindowStr, *groupByWindow)
     }
 }

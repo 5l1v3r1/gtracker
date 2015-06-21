@@ -63,9 +63,7 @@ func getX11WindowValue(name string) (string) {
 
 func IsLocked() (bool) {
     idle, err := getIdleTime()
-    if err != nil {
-        log.Println(err)
-    }
+    common.CheckError(err)
     if idle > 10000 {
         return true
     } else {

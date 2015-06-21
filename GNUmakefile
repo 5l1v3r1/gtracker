@@ -26,7 +26,8 @@ install-go-requirements:
 	"github.com/BurntSushi/xgbutil/xprop" \
 	"github.com/mattn/go-sqlite3" \
 	"github.com/syohex/go-texttable" \
-	"github.com/jinzhu/now"
+	"github.com/jinzhu/now" \
+	"github.com/mvdan/xurls"
 
 
 build:

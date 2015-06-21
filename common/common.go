@@ -22,6 +22,12 @@ type CurrentApp struct {
 }
 
 
+func CheckError(err error) {
+    if err != nil {
+        log.Fatal(err)
+    }
+}
+
 
 func GetWorkDir() (string) {
     currentUser, _ := user.Current()
@@ -40,9 +46,7 @@ func initWorkDirIfNeeded(workDirPath string) {
 func InitDatabase() {
     db, err := sql.Open("sqlite3", path.Join(GetWorkDir(), settings.DatabaseName))
     defer db.Close()
-    if err != nil {
-        log.Fatal(err)
-    }
+    CheckError(err)
     query := "CREATE TABLE apps (id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, name TEXT, windowName TEXT, runningTime INT, startTime DATETIME, endTime DATETIME);"
     _, _ = db.Exec(query)
 }
@@ -51,18 +55,12 @@ func InitDatabase() {
 func SaveAppInfo(app CurrentApp) {
     db, err := sql.Open("sqlite3", path.Join(GetWorkDir(), settings.DatabaseName))
     defer db.Close()
-    if err != nil {
-        log.Fatal(err)
-    }
+    CheckError(err)
     tx, err := db.Begin()
-    if err != nil {
-        log.Fatal(err)
-    }
+    CheckError(err)
     query, _ := tx.Prepare("INSERT INTO apps(name, windowName, runningTime, startTime, endTime) VALUES(?, ?, ?, ?, ?)")
     defer query.Close()
-    if err != nil {
-        log.Fatal(err)
-    }
+    CheckError(err)
     _, _ = query.Exec(app.Name, app.WindowName, app.RunningTime, app.StartTime, time.Now().Unix())
     tx.Commit()
 }
