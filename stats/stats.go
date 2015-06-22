@@ -90,27 +90,29 @@ func getStatsForCondition(whereCondition string, formatter string, filterByName 
     if groupByWindow {
         groupKey = "windowName"
     }
-    var queryStr = fmt.Sprintf("SELECT name, windowName, SUM(runningTime), (SELECT SUM(runningTime) from apps WHERE %s) total FROM apps WHERE %s GROUP BY %s", whereCondition, whereCondition, groupKey)
+    filterQueryPart := ""
     if filterByName != "" {
-        queryStr = fmt.Sprintf("%s %s", queryStr, "AND name LIKE '%" + filterByName + "%'")
+        filterQueryPart = fmt.Sprintf("%s %s", filterQueryPart, "AND name LIKE '%" + filterByName + "%'")
     }
     if filterByWindow != "" {
-        queryStr = fmt.Sprintf("%s %s", queryStr, "AND windowName LIKE '%" + filterByWindow + "%'")
+        filterQueryPart = fmt.Sprintf("%s %s", filterQueryPart, "AND windowName LIKE '%" + filterByWindow + "%'")
     }
+    var queryStr = fmt.Sprintf("SELECT name, windowName, SUM(runningTime), (SELECT SUM(runningTime) from apps WHERE %s %s) total FROM apps WHERE %s %s", whereCondition, filterQueryPart, whereCondition, filterQueryPart)
+    queryStr = fmt.Sprintf("%s GROUP BY %s", queryStr, groupKey)
     rows, err := db.Query(queryStr)
     common.CheckError(err)
     statsArray := make([]appStats, 0)
     for rows.Next() {
         var name string
         var windowName string
-        var runningTime int
+        var runningTime float64
         var totalTime float64
         rows.Scan(&name, &windowName, &runningTime, &totalTime)
         key := name
         if groupByWindow {
             key = windowName
         }
-        statsArray = append(statsArray, appStats{Name: key, RunningTime: runningTime, Percentage: float64(runningTime)/totalTime * 100})
+        statsArray = append(statsArray, appStats{Name: key, RunningTime: int(runningTime), Percentage: float64(runningTime)/totalTime * 100})
     }
     formatters := map[string]func(statsArray []appStats){
         "pretty": statsPrettyTablePrinter,
