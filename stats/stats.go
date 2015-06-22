@@ -40,30 +40,30 @@ func (a AppStatsArray) Less(i, j int) bool {
 }
 
 
-func LastWeekStats(formatter string, filterByName string, filterByWindow string, groupByWindow bool) {
+func LastWeekStats(formatter string, filterByName string, filterByWindow string, groupByWindow bool, maxResults int) {
     now.FirstDayMonday = true
     weekBeginningTimestamp := strconv.FormatInt(now.BeginningOfWeek().Unix(), 10)
     condition := fmt.Sprintf("startTime >= %s", weekBeginningTimestamp)
-    getStatsForCondition(condition, formatter, filterByName, filterByWindow, groupByWindow)
+    getStatsForCondition(condition, formatter, filterByName, filterByWindow, groupByWindow, maxResults)
 }
 
 
-func TodayStats(formatter string, filterByName string, filterByWindow string, groupByWindow bool) {
+func TodayStats(formatter string, filterByName string, filterByWindow string, groupByWindow bool, maxResults int) {
     todayBeginningTimestamp := strconv.FormatInt(now.BeginningOfDay().Unix(), 10)
     condition := fmt.Sprintf("startTime >= %s", todayBeginningTimestamp)
-    getStatsForCondition(condition, formatter, filterByName, filterByWindow, groupByWindow)
+    getStatsForCondition(condition, formatter, filterByName, filterByWindow, groupByWindow, maxResults)
 }
 
 
-func YesterdayStats(formatter string, filterByName string, filterByWindow string, groupByWindow bool) {
+func YesterdayStats(formatter string, filterByName string, filterByWindow string, groupByWindow bool, maxResults int) {
     todayBeginningTimestamp := strconv.FormatInt(now.BeginningOfDay().Unix(), 10)
     yesterdayBeginningTimestamp := strconv.FormatInt(now.BeginningOfDay().Unix() - 24*60*60, 10)
     condition := fmt.Sprintf("startTime >= %s AND endTime <= %s", yesterdayBeginningTimestamp, todayBeginningTimestamp)
-    getStatsForCondition(condition, formatter, filterByName, filterByWindow, groupByWindow)
+    getStatsForCondition(condition, formatter, filterByName, filterByWindow, groupByWindow, maxResults)
 }
 
 
-func ShowForRange(startDateStr string, endDateStr string, formatter string, filterByName string, filterByWindow string, groupByWindow bool) {
+func ShowForRange(startDateStr string, endDateStr string, formatter string, filterByName string, filterByWindow string, groupByWindow bool, maxResults int) {
     startDate, startDateError := now.Parse(startDateStr)
     endDate, endDateError := now.Parse(endDateStr)
     if startDateError != nil && endDateError != nil {
@@ -79,11 +79,11 @@ func ShowForRange(startDateStr string, endDateStr string, formatter string, filt
     if endDateError == nil {
         condition = fmt.Sprintf("%s endTime <= %s", condition, strconv.FormatInt(endDate.Unix(), 10))
     }
-    getStatsForCondition(condition, formatter, filterByName, filterByWindow, groupByWindow)
+    getStatsForCondition(condition, formatter, filterByName, filterByWindow, groupByWindow, maxResults)
 }
 
 
-func getStatsForCondition(whereCondition string, formatter string, filterByName string, filterByWindow string, groupByWindow bool) {
+func getStatsForCondition(whereCondition string, formatter string, filterByName string, filterByWindow string, groupByWindow bool, maxResults int) {
     db, err := sql.Open("sqlite3", path.Join(common.GetWorkDir(), settings.DatabaseName))
     defer db.Close()
     groupKey := "name"
@@ -118,7 +118,10 @@ func getStatsForCondition(whereCondition string, formatter string, filterByName 
         "json": statsJsonPrinter,
     }
     sort.Sort(sort.Reverse(AppStatsArray(statsArray)))
-    formatters[formatter](statsArray)
+    if len(statsArray) < maxResults {
+        maxResults = len(statsArray)
+    }
+    formatters[formatter](statsArray[:maxResults])
 }
 
 

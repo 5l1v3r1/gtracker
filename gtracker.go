@@ -98,6 +98,8 @@ var filterByNameStr = flag.String("name", "", "Filter by name")
 var filterByWindowStr = flag.String("window", "", "Filter by window")
 var groupByWindow = flag.Bool("group-by-window", false, "Group by window name")
 
+var maxResults = flag.Int("max-results", 15, "Number of results")
+
 
 func main() {
     flag.Parse()
@@ -107,18 +109,18 @@ func main() {
     }
 
     if *showTodayStats {
-        stats.TodayStats(*formatter, *filterByNameStr, *filterByWindowStr, *groupByWindow)
+        stats.TodayStats(*formatter, *filterByNameStr, *filterByWindowStr, *groupByWindow, *maxResults)
     }
 
     if *showYesterdayStats {
-        stats.YesterdayStats(*formatter, *filterByNameStr, *filterByWindowStr, *groupByWindow)
+        stats.YesterdayStats(*formatter, *filterByNameStr, *filterByWindowStr, *groupByWindow, *maxResults)
     }
 
     if *showWeekStats {
-        stats.LastWeekStats(*formatter, *filterByNameStr, *filterByWindowStr, *groupByWindow)
+        stats.LastWeekStats(*formatter, *filterByNameStr, *filterByWindowStr, *groupByWindow, *maxResults)
     }
 
     if *startDate != "" || *endDate != "" {
-        stats.ShowForRange(*startDate, *endDate, *formatter, *filterByNameStr, *filterByWindowStr, *groupByWindow)
+        stats.ShowForRange(*startDate, *endDate, *formatter, *filterByNameStr, *filterByWindowStr, *groupByWindow, *maxResults)
     }
 }
