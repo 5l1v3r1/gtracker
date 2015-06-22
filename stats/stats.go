@@ -2,13 +2,13 @@ package stats
 
 import (
     "fmt"
-    "time"
     "strconv"
-    "database/sql"
     "log"
     "path"
     "strings"
+    "sort"
     "encoding/json"
+    "database/sql"
 
     _ "github.com/mattn/go-sqlite3"
     "github.com/syohex/go-texttable"
@@ -17,6 +17,27 @@ import (
     "../settings"
     "../common"
 )
+
+type appStats struct {
+    Name string
+    RunningTime int
+    Percentage float64
+}
+
+
+type AppStatsArray []appStats
+
+func (a AppStatsArray) Len() int {
+    return len(a)
+}
+
+func (a AppStatsArray) Swap(i, j int) {
+    a[i], a[j] = a[j], a[i]
+}
+
+func (a AppStatsArray) Less(i, j int) bool {
+    return a[i].RunningTime < a[j].RunningTime
+}
 
 
 func LastWeekStats(formatter string, filterByName string, filterByWindow string, groupByWindow bool) {
@@ -65,7 +86,11 @@ func ShowForRange(startDateStr string, endDateStr string, formatter string, filt
 func getStatsForCondition(whereCondition string, formatter string, filterByName string, filterByWindow string, groupByWindow bool) {
     db, err := sql.Open("sqlite3", path.Join(common.GetWorkDir(), settings.DatabaseName))
     defer db.Close()
-    var queryStr = fmt.Sprintf("SELECT name, windowName, runningTime, startTime, endTime FROM apps WHERE %s", whereCondition)
+    groupKey := "name"
+    if groupByWindow {
+        groupKey = "windowName"
+    }
+    var queryStr = fmt.Sprintf("SELECT name, windowName, SUM(runningTime), (SELECT SUM(runningTime) from apps WHERE %s) total FROM apps WHERE %s GROUP BY %s", whereCondition, whereCondition, groupKey)
     if filterByName != "" {
         queryStr = fmt.Sprintf("%s %s", queryStr, "AND name LIKE '%" + filterByName + "%'")
     }
@@ -74,91 +99,71 @@ func getStatsForCondition(whereCondition string, formatter string, filterByName 
     }
     rows, err := db.Query(queryStr)
     common.CheckError(err)
-    totalSeconds := 0
-    stats := make(map[string]int64)
+    statsArray := make([]appStats, 0)
     for rows.Next() {
         var name string
         var windowName string
         var runningTime int
-        var startTime time.Time
-        var endTime time.Time
-        rows.Scan(&name, &windowName, &runningTime, &startTime, &endTime)
+        var totalTime float64
+        rows.Scan(&name, &windowName, &runningTime, &totalTime)
         key := name
         if groupByWindow {
             key = windowName
         }
-        _, exists := stats[key]
-        if !exists {
-            stats[key] = 0
-        }
-        totalSeconds += runningTime
-        stats[key] += int64(runningTime)
+        statsArray = append(statsArray, appStats{Name: key, RunningTime: runningTime, Percentage: float64(runningTime)/totalTime * 100})
     }
-    formatters := map[string]func(stats map[string]int64, totalSeconds int){
+    formatters := map[string]func(statsArray []appStats){
         "pretty": statsPrettyTablePrinter,
         "simple": statsSimplePrinter,
         "json": statsJsonPrinter,
     }
-    formatters[formatter](stats, totalSeconds)
+    sort.Sort(sort.Reverse(AppStatsArray(statsArray)))
+    formatters[formatter](statsArray)
 }
 
 
-func statsPrettyTablePrinter(stats map[string]int64, totalSeconds int) {
+func statsPrettyTablePrinter(statsArray []appStats) {
     tbl := &texttable.TextTable{}
     tbl.SetHeader("Name", "Duration", "Percentage")
-    for name, seconds := range stats {
-        if name != "" && seconds != 0 {
-            name, duration, percentage := getStatsStringsForRow(name, seconds, totalSeconds)
-            tbl.AddRow(name, duration, percentage)
+    for _, app := range statsArray {
+        if app.Name != "" && app.RunningTime != 0 {
+            tbl.AddRow(app.Name, getDurationString(app.RunningTime), getPercentageString(app.Percentage))
         }
     }
     fmt.Println(tbl.Draw())
 }
 
 
-func statsSimplePrinter(stats map[string]int64, totalSeconds int) {
+func statsSimplePrinter(statsArray []appStats) {
     result := "Name\tDuration\tPercentage\n"
-    for name, seconds := range stats {
-        if name != "" && seconds != 0 {
-            name, duration, percentage := getStatsStringsForRow(name, seconds, totalSeconds)
-            result += fmt.Sprintf("%s\t%s\t%s\n", name, duration, percentage)
+    for _, app := range statsArray {
+        if app.Name != "" && app.RunningTime != 0 {
+            result += fmt.Sprintf("%s\t%s\t%s\n", app.Name, getDurationString(app.RunningTime), getPercentageString(app.Percentage))
         }
     }
     fmt.Println(strings.TrimSuffix(result, "\n"))
 }
 
 
-func statsJsonPrinter(stats map[string]int64, totalSeconds int) {
-    type app struct {
-        Name string
-        DurationStr string
-        DurationSeconds int64
-        Percentage float64
-    }
-    result := make([]app, 0)
-
-    for name, seconds := range stats {
-        if name != "" && seconds != 0 {
-            name, duration, percentage := getStatsStringsForRow(name, seconds, totalSeconds)
-            percentageFloat, _ := strconv.ParseFloat(percentage, 64)
-            result = append(result, app{Name: name, DurationStr: duration, Percentage: percentageFloat, DurationSeconds: seconds})
-        }
-    }
-
-    resultBytes, _ := json.Marshal(result)
+func statsJsonPrinter(statsArray []appStats) {
+    resultBytes, _ := json.Marshal(statsArray)
     resultStr := string(resultBytes)
     fmt.Println(resultStr)
 }
 
 
-func getStatsStringsForRow(name string, appSeconds int64, totalSeconds int) (string, string, string) {
-    hours, minutes, seconds := getTimeInfoFromDuration(appSeconds)
-    durationString := fmt.Sprintf("%sh %sm %ss", strconv.FormatInt(hours, 10), strconv.FormatInt(minutes, 10), strconv.FormatInt(seconds, 10))
-    return name, durationString, fmt.Sprintf("%.1f", float64(appSeconds)/float64(totalSeconds) * 100.0)
+func getPercentageString(percentage float64) string {
+    return fmt.Sprintf("%.2f", percentage)
 }
 
 
-func getTimeInfoFromDuration(duration int64) (int64, int64, int64) {
+func getDurationString(runningTime int) string {
+    hours, minutes, seconds := getTimeInfoFromDuration(runningTime)
+    return fmt.Sprintf("%vh %vm %vs", hours, minutes, seconds)
+}
+
+
+func getTimeInfoFromDuration(duration int) (int, int, int) {
     hours := duration / 3600
     minutes := (duration / 60) - (hours * 60)
     seconds := duration - (minutes * 60) - (hours * 60 * 60)
