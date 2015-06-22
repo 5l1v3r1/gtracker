@@ -3,6 +3,7 @@ package linux
 import (
     "time"
     "fmt"
+    "runtime"
 
     "github.com/BurntSushi/xgb"
     "github.com/BurntSushi/xgb/xproto"
@@ -13,7 +14,7 @@ import (
 )
 
 
-var X, err = xgb.NewConn()
+var X *xgb.Conn
 
 
 func GetCurrentAppInfo() (string, string) {
@@ -88,5 +89,9 @@ func InitializeCurrentApp() (common.CurrentApp) {
 
 
 func init() {
-    common.CheckError(err)
+    if runtime.GOOS == "linux" {
+        var err error
+        X, err = xgb.NewConn()
+        common.CheckError(err)
+    }
 }

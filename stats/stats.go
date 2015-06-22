@@ -8,6 +8,7 @@ import (
     "log"
     "path"
     "strings"
+    "encoding/json"
 
     _ "github.com/mattn/go-sqlite3"
     "github.com/syohex/go-texttable"
@@ -73,8 +74,8 @@ func getStatsForCondition(whereCondition string, formatter string, filterByName 
     }
     rows, err := db.Query(queryStr)
     common.CheckError(err)
-    var stats map[string]int64
-    stats = make(map[string]int64)
+    totalSeconds := 0
+    stats := make(map[string]int64)
     for rows.Next() {
         var name string
         var windowName string
@@ -90,40 +91,70 @@ func getStatsForCondition(whereCondition string, formatter string, filterByName 
         if !exists {
             stats[key] = 0
         }
+        totalSeconds += runningTime
         stats[key] += int64(runningTime)
     }
-    formatters := map[string]func(stats map[string]int64){
+    formatters := map[string]func(stats map[string]int64, totalSeconds int){
         "pretty": statsPrettyTablePrinter,
         "simple": statsSimplePrinter,
+        "json": statsJsonPrinter,
     }
-    formatters[formatter](stats)
+    formatters[formatter](stats, totalSeconds)
 }
 
 
-func statsPrettyTablePrinter(stats map[string]int64) {
+func statsPrettyTablePrinter(stats map[string]int64, totalSeconds int) {
     tbl := &texttable.TextTable{}
-    tbl.SetHeader("Name", "Duration")
+    tbl.SetHeader("Name", "Duration", "Percentage")
     for name, seconds := range stats {
         if name != "" && seconds != 0 {
-            hours, minutes, seconds := getTimeInfoFromDuration(seconds)
-            durationString := fmt.Sprintf("%sh %sm %ss", strconv.FormatInt(hours, 10), strconv.FormatInt(minutes, 10), strconv.FormatInt(seconds, 10))
-            tbl.AddRow(name, durationString)
+            name, duration, percentage := getStatsStringsForRow(name, seconds, totalSeconds)
+            tbl.AddRow(name, duration, percentage)
         }
     }
     fmt.Println(tbl.Draw())
 }
 
 
-func statsSimplePrinter(stats map[string]int64) {
-    result := ""
+func statsSimplePrinter(stats map[string]int64, totalSeconds int) {
+    result := "Name\tDuration\tPercentage\n"
     for name, seconds := range stats {
         if name != "" && seconds != 0 {
-            hours, minutes, seconds := getTimeInfoFromDuration(seconds)
-            durationString := fmt.Sprintf("%s:%s:%s", strconv.FormatInt(hours, 10), strconv.FormatInt(minutes, 10), strconv.FormatInt(seconds, 10))
-            result += fmt.Sprintf("%s %s\n", name, durationString)
+            name, duration, percentage := getStatsStringsForRow(name, seconds, totalSeconds)
+            result += fmt.Sprintf("%s\t%s\t%s\n", name, duration, percentage)
         }
     }
     fmt.Println(strings.TrimSuffix(result, "\n"))
+}
+
+
+func statsJsonPrinter(stats map[string]int64, totalSeconds int) {
+    type app struct {
+        Name string
+        DurationStr string
+        DurationSeconds int64
+        Percentage float64
+    }
+    result := make([]app, 0)
+
+    for name, seconds := range stats {
+        if name != "" && seconds != 0 {
+            name, duration, percentage := getStatsStringsForRow(name, seconds, totalSeconds)
+            percentageFloat, _ := strconv.ParseFloat(percentage, 64)
+            result = append(result, app{Name: name, DurationStr: duration, Percentage: percentageFloat, DurationSeconds: seconds})
+        }
+    }
+
+    resultBytes, _ := json.Marshal(result)
+    resultStr := string(resultBytes)
+    fmt.Println(resultStr)
+}
+
+
+func getStatsStringsForRow(name string, appSeconds int64, totalSeconds int) (string, string, string) {
+    hours, minutes, seconds := getTimeInfoFromDuration(appSeconds)
+    durationString := fmt.Sprintf("%sh %sm %ss", strconv.FormatInt(hours, 10), strconv.FormatInt(minutes, 10), strconv.FormatInt(seconds, 10))
+    return name, durationString, fmt.Sprintf("%.1f", float64(appSeconds)/float64(totalSeconds) * 100.0)
 }
 
 

@@ -92,7 +92,7 @@ var showWeekStats = flag.Bool("week", false, "Show last week stats")
 
 var startDate = flag.String("start-date", "", "Show stats from date")
 var endDate = flag.String("end-date", "", "Show stats to date")
-var formatter = flag.String("formatter", "pretty", "Formatter to use (simple, pretty)")
+var formatter = flag.String("formatter", "pretty", "Formatter to use (simple, pretty, json)")
 
 var filterByNameStr = flag.String("name", "", "Filter by name")
 var filterByWindowStr = flag.String("window", "", "Filter by window")
