@@ -12,7 +12,6 @@ import (
     _ "github.com/mattn/go-sqlite3"
     "github.com/syohex/go-texttable"
     "github.com/jinzhu/now"
-    // "github.com/mvdan/xurls"
 
     "../settings"
     "../common"
