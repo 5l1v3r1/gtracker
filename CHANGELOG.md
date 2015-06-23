@@ -4,7 +4,7 @@ gtracker - simple time tracker app.
 
 ## [0.0.2] - 2015-06-22
 ### Added
-- "--max-name-length" command line option for to limit the length of the app/window name.
+- "--max-name-length" command line option to limit the length of the app/window name.
 - "--full-names" command line option for disable limitation the length of the names.
 
 ### Changed
