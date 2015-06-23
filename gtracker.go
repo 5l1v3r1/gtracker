@@ -101,7 +101,21 @@ var maxResults = flag.Int("max-results", 15, "Number of results")
 var fullNames = flag.Bool("full-names", false, "Show full names (pretty or simple formatters only)")
 var maxNameLength = flag.Int("max-name-length", 75, "Maximum length of a name (pretty or simple formatters only)")
 
+
 func main() {
+    args := common.CmdArgs{ShowTodayStats: *showTodayStats,
+                           ShowYesterdayStats: *showYesterdayStats,
+                           ShowWeekStats: *showWeekStats,
+                           StartDate: *startDate,
+                           EndDate: *endDate,
+                           Formatter: *formatter,
+                           FilterByName: *filterByNameStr,
+                           FilterByWindow: *filterByWindowStr,
+                           GroupByWindow: *groupByWindow,
+                           MaxResults: *maxResults,
+                           FullNames: *fullNames,
+                           MaxNameLength: *maxNameLength}
+
     flag.Parse()
 
     if *daemon {
@@ -109,18 +123,18 @@ func main() {
     }
 
     if *showTodayStats {
-        stats.TodayStats(*formatter, *filterByNameStr, *filterByWindowStr, *groupByWindow, *maxResults, *fullNames, *maxNameLength)
+        stats.TodayStats(args)
     }
 
     if *showYesterdayStats {
-        stats.YesterdayStats(*formatter, *filterByNameStr, *filterByWindowStr, *groupByWindow, *maxResults, *fullNames, *maxNameLength)
+        stats.YesterdayStats(args)
     }
 
     if *showWeekStats {
-        stats.LastWeekStats(*formatter, *filterByNameStr, *filterByWindowStr, *groupByWindow, *maxResults, *fullNames, *maxNameLength)
+        stats.LastWeekStats(args)
     }
 
     if *startDate != "" || *endDate != "" {
-        stats.ShowForRange(*startDate, *endDate, *formatter, *filterByNameStr, *filterByWindowStr, *groupByWindow, *maxResults, *fullNames, *maxNameLength)
+        stats.ShowForRange(args)
     }
 }

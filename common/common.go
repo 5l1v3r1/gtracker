@@ -15,6 +15,22 @@ import (
 )
 
 
+type CmdArgs struct {
+    ShowTodayStats bool
+    ShowYesterdayStats bool
+    ShowWeekStats bool
+    StartDate string
+    EndDate string
+    Formatter string
+    FilterByName string
+    FilterByWindow string
+    GroupByWindow bool
+    MaxResults int
+    FullNames bool
+    MaxNameLength int
+}
+
+
 type CurrentApp struct {
     Name string
     WindowName string
