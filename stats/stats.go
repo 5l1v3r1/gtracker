@@ -40,30 +40,30 @@ func (a AppStatsArray) Less(i, j int) bool {
 }
 
 
-func LastWeekStats(formatter string, filterByName string, filterByWindow string, groupByWindow bool, maxResults int) {
+func LastWeekStats(formatter string, filterByName string, filterByWindow string, groupByWindow bool, maxResults int, fullNames bool, maxNameLength int) {
     now.FirstDayMonday = true
     weekBeginningTimestamp := strconv.FormatInt(now.BeginningOfWeek().Unix(), 10)
     condition := fmt.Sprintf("startTime >= %s", weekBeginningTimestamp)
-    getStatsForCondition(condition, formatter, filterByName, filterByWindow, groupByWindow, maxResults)
+    getStatsForCondition(condition, formatter, filterByName, filterByWindow, groupByWindow, maxResults, fullNames, maxNameLength)
 }
 
 
-func TodayStats(formatter string, filterByName string, filterByWindow string, groupByWindow bool, maxResults int) {
+func TodayStats(formatter string, filterByName string, filterByWindow string, groupByWindow bool, maxResults int, fullNames bool, maxNameLength int) {
     todayBeginningTimestamp := strconv.FormatInt(now.BeginningOfDay().Unix(), 10)
     condition := fmt.Sprintf("startTime >= %s", todayBeginningTimestamp)
-    getStatsForCondition(condition, formatter, filterByName, filterByWindow, groupByWindow, maxResults)
+    getStatsForCondition(condition, formatter, filterByName, filterByWindow, groupByWindow, maxResults, fullNames, maxNameLength)
 }
 
 
-func YesterdayStats(formatter string, filterByName string, filterByWindow string, groupByWindow bool, maxResults int) {
+func YesterdayStats(formatter string, filterByName string, filterByWindow string, groupByWindow bool, maxResults int, fullNames bool, maxNameLength int) {
     todayBeginningTimestamp := strconv.FormatInt(now.BeginningOfDay().Unix(), 10)
     yesterdayBeginningTimestamp := strconv.FormatInt(now.BeginningOfDay().Unix() - 24*60*60, 10)
     condition := fmt.Sprintf("startTime >= %s AND endTime <= %s", yesterdayBeginningTimestamp, todayBeginningTimestamp)
-    getStatsForCondition(condition, formatter, filterByName, filterByWindow, groupByWindow, maxResults)
+    getStatsForCondition(condition, formatter, filterByName, filterByWindow, groupByWindow, maxResults, fullNames, maxNameLength)
 }
 
 
-func ShowForRange(startDateStr string, endDateStr string, formatter string, filterByName string, filterByWindow string, groupByWindow bool, maxResults int) {
+func ShowForRange(startDateStr string, endDateStr string, formatter string, filterByName string, filterByWindow string, groupByWindow bool, maxResults int, fullNames bool, maxNameLength int) {
     startDate, startDateError := now.Parse(startDateStr)
     endDate, endDateError := now.Parse(endDateStr)
     if startDateError != nil && endDateError != nil {
@@ -79,11 +79,11 @@ func ShowForRange(startDateStr string, endDateStr string, formatter string, filt
     if endDateError == nil {
         condition = fmt.Sprintf("%s endTime <= %s", condition, strconv.FormatInt(endDate.Unix(), 10))
     }
-    getStatsForCondition(condition, formatter, filterByName, filterByWindow, groupByWindow, maxResults)
+    getStatsForCondition(condition, formatter, filterByName, filterByWindow, groupByWindow, maxResults, fullNames, maxNameLength)
 }
 
 
-func getStatsForCondition(whereCondition string, formatter string, filterByName string, filterByWindow string, groupByWindow bool, maxResults int) {
+func getStatsForCondition(whereCondition string, formatter string, filterByName string, filterByWindow string, groupByWindow bool, maxResults int, fullNames bool, maxNameLength int) {
     db, err := sql.Open("sqlite3", path.Join(common.GetWorkDir(), settings.DatabaseName))
     defer db.Close()
     groupKey := "name"
@@ -108,11 +108,16 @@ func getStatsForCondition(whereCondition string, formatter string, filterByName 
         var runningTime float64
         var totalTime float64
         rows.Scan(&name, &windowName, &runningTime, &totalTime)
-        key := name
+        nameStr := name
         if groupByWindow {
-            key = windowName
+            nameStr = windowName
         }
-        statsArray = append(statsArray, appStats{Name: key, RunningTime: int(runningTime), Percentage: float64(runningTime)/totalTime * 100})
+        if formatter != "json" {
+            if len(nameStr) > maxNameLength {
+                nameStr = nameStr[:maxNameLength]
+            }
+        }
+        statsArray = append(statsArray, appStats{Name: nameStr, RunningTime: int(runningTime), Percentage: float64(runningTime)/totalTime * 100})
     }
     formatters := map[string]func(statsArray []appStats){
         "pretty": statsPrettyTablePrinter,
