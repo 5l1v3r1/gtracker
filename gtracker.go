@@ -103,6 +103,8 @@ var maxNameLength = flag.Int("max-name-length", 75, "Maximum length of a name (p
 
 
 func main() {
+    flag.Parse()
+
     args := common.CmdArgs{ShowTodayStats: *showTodayStats,
                            ShowYesterdayStats: *showYesterdayStats,
                            ShowWeekStats: *showWeekStats,
@@ -115,8 +117,6 @@ func main() {
                            MaxResults: *maxResults,
                            FullNames: *fullNames,
                            MaxNameLength: *maxNameLength}
-
-    flag.Parse()
 
     if *daemon {
         runDaemon()
