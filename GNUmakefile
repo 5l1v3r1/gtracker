@@ -1,8 +1,11 @@
 GOPATH=/tmp/
 WORKDIR=/Users/$(shell whoami)/.gtracker/bin/
 
-install-osx:
+install:
 	make build
+	make install-osx
+
+install-osx:
 	sed "s@\[whoami\]@$(shell whoami)@" com.akhmetov.gtracker.launchd.plist.template > com.akhmetov.gtracker.launchd.plist
 	cp com.akhmetov.gtracker.launchd.plist /Users/$(shell whoami)/Library/LaunchAgents/com.akhmetov.gtracker.launchd.plist
 
@@ -10,9 +13,6 @@ install-osx:
 	cp gtracker $(WORKDIR)
 	chmod +x $(WORKDIR)gtracker
 	rm -f /usr/local/bin/gtracker
-
-	mkdir -p /var/log/gtracker/
-	chown -R $(shell whoami) /var/log/gtracker/
 
 	-launchctl unload -w /Users/$(shell whoami)/Library/LaunchAgents/com.akhmetov.gtracker.launchd.plist
 	launchctl load -w /Users/$(shell whoami)/Library/LaunchAgents/com.akhmetov.gtracker.launchd.plist
