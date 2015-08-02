@@ -1,24 +1,21 @@
 GOPATH=/tmp/
-WORKDIR=/usr/share/gtracker/
+WORKDIR=/Users/$(shell whoami)/.gtracker/bin/
 
 install-osx:
 	make build
 	sed "s@\[whoami\]@$(shell whoami)@" com.akhmetov.gtracker.launchd.plist.template > com.akhmetov.gtracker.launchd.plist
-	sudo cp com.akhmetov.gtracker.launchd.plist /Library/LaunchDaemons/com.akhmetov.gtracker.launchd.plist
+	cp com.akhmetov.gtracker.launchd.plist /Users/$(shell whoami)/Library/LaunchAgents/com.akhmetov.gtracker.launchd.plist
 
-	sudo mkdir -p $(WORKDIR)
-	sudo cp gtracker $(WORKDIR)
-	sudo chmod +x $(WORKDIR)gtracker
-	sudo rm -f /usr/local/bin/gtracker
-	sudo ln -s $(WORKDIR)gtracker /usr/local/bin/gtracker
-	sudo chown $(shell whoami) $(WORKDIR)
+	mkdir -p $(WORKDIR)
+	cp gtracker $(WORKDIR)
+	chmod +x $(WORKDIR)gtracker
+	rm -f /usr/local/bin/gtracker
 
-	sudo mkdir -p /var/log/gtracker/
-	sudo chown -R $(shell whoami) /var/log/gtracker/
+	mkdir -p /var/log/gtracker/
+	chown -R $(shell whoami) /var/log/gtracker/
 
-	sudo chown root:wheel /Library/LaunchDaemons/com.akhmetov.gtracker.launchd.plist
-	-sudo launchctl unload -w /Library/LaunchDaemons/com.akhmetov.gtracker.launchd.plist
-	sudo launchctl load -w /Library/LaunchDaemons/com.akhmetov.gtracker.launchd.plist
+	-launchctl unload -w /Users/$(shell whoami)/Library/LaunchAgents/com.akhmetov.gtracker.launchd.plist
+	launchctl load -w /Users/$(shell whoami)/Library/LaunchAgents/com.akhmetov.gtracker.launchd.plist
 
 install-go-requirements:
 	GOPATH=$(GOPATH) go get "github.com/BurntSushi/xgb" \

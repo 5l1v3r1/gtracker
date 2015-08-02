@@ -6,17 +6,11 @@
     <string>com.akhmetov.gtracker</string>
     <key>ProgramArguments</key>
     <array>
-        <string>/usr/local/bin/gtracker</string>
+        <string>/Users/[whoami]/.gtracker/bin/gtracker</string>
         <string>--daemon</string>
     </array>
     <key>KeepAlive</key>
     <true/>
-    <key>WorkingDirectory</key>
-    <string>/usr/share/gtracker/</string>
-    <key>StandardErrorPath</key>
-    <string>/var/log/gtracker/gtracker.log</string>
-    <key>StandardOutPath</key>
-    <string>/var/log/gtracker/gtracker.log</string>
     <key>UserName</key>
     <string>[whoami]</string>
 </dict>
