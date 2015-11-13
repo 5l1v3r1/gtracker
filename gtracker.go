@@ -1,91 +1,69 @@
 package main
 
 import (
-    "os"
-    "fmt"
-    "os/signal"
-    "time"
-    "flag"
-    "runtime"
+	"flag"
+	"fmt"
+	"os"
+	"os/signal"
+	"runtime"
+	"time"
 
-    "./stats"
-    "./osx"
-    "./common"
-    "./linux"
+	"./common"
+	"./stats"
+	"./tracker"
 )
 
+func getTrackerForCurrentOS() tracker.Tracker {
+	if runtime.GOOS == "linux" {
+		return tracker.TrackerLinux{}
+	}
 
-func isLocked() (bool) {
-    if runtime.GOOS == "darwin" {
-        return osx.IsLocked()
-    }
-    if runtime.GOOS == "linux" {
-        return linux.IsLocked()
-    }
-    return true
+	return tracker.TrackerOSX{}
 }
-
-
-func getCurrentAppInfo() (string, string) {
-    if runtime.GOOS == "darwin" {
-        return osx.GetCurrentAppInfo()
-    }
-    if runtime.GOOS == "linux" {
-        return linux.GetCurrentAppInfo()
-    }
-    return "", ""
-}
-
-
-func initializeCurrentApp() (common.CurrentApp) {
-    if runtime.GOOS == "darwin" {
-        return osx.InitializeCurrentApp()
-    }
-    if runtime.GOOS == "linux" {
-        return linux.InitializeCurrentApp()
-    }
-    return common.CurrentApp{}
-}
-
 
 func runDaemon() {
-    common.InitDatabase()
-    currentApp := initializeCurrentApp()
+	common.InitDatabase()
+	tracker := getTrackerForCurrentOS()
+	currentApp := tracker.InitializeCurrentApp()
 
-    // перехватываем CTRL+C
-    signalChan := make(chan os.Signal, 1)
-    signal.Notify(signalChan, os.Interrupt)
-    go func() {
-        for _ = range signalChan {
-            common.Log.Info("Received an interrupt, stopping...")
-            common.SaveAppInfo(currentApp)
-            os.Exit(0)
-        }
-    }()
+	// CTRL+C
+	signalChan := make(chan os.Signal, 1)
+	signal.Notify(signalChan, os.Interrupt)
+	go func() {
+		for _ = range signalChan {
+			common.Log.Info("Received an interrupt, stopping...")
+			common.SaveAppInfo(currentApp)
+			os.Exit(0)
+		}
+	}()
 
-    common.Log.Info("Daemon started")
-    for true {
-        if isLocked() == false {
-            appName, windowName := getCurrentAppInfo()
-            if (currentApp.Name != appName) || (currentApp.WindowName != windowName) {
-                // сменилось активное приложение
-                common.SaveAppInfo(currentApp)
-                currentApp.RunningTime = 1
-                currentApp.StartTime = time.Now().Unix()
-            } else {
-                currentApp.RunningTime += 1
-            }
-            currentApp.Name, currentApp.WindowName = appName, windowName
-            common.Log.Info(fmt.Sprintf("App=\"%s\"    Window=\"%s\"    Running=%vs", currentApp.Name, currentApp.WindowName, currentApp.RunningTime))
-        } else {
-            common.Log.Info("Locked")
-        }
-        time.Sleep(1000 * time.Millisecond)
-    }
+	common.Log.Info("Daemon started")
+	for true {
+		if tracker.IsLocked() == false {
+			appName, windowName := tracker.GetCurrentAppInfo()
+			if (currentApp.Name != appName) || (currentApp.WindowName != windowName) {
+				// new active app
+				common.SaveAppInfo(currentApp)
+				currentApp.RunningTime = 1
+				currentApp.StartTime = time.Now().Unix()
+			} else {
+				currentApp.RunningTime += 1
+			}
+			currentApp.Name, currentApp.WindowName = appName, windowName
+			common.Log.Info(fmt.Sprintf(
+				"App=\"%s\"    Window=\"%s\"    Running=%vs",
+				currentApp.Name,
+				currentApp.WindowName,
+				currentApp.RunningTime,
+			))
+		} else {
+			common.Log.Info("Locked")
+		}
+		time.Sleep(time.Second)
+	}
 }
 
-
-var daemon = flag.Bool("daemon", false, "Run tracking daemon")
+var daemon = flag.Bool("daemon", false, "Run tracking process")
 var showTodayStats = flag.Bool("today", false, "Show today stats")
 var showYesterdayStats = flag.Bool("yesterday", false, "Show yesterday stats")
 var showWeekStats = flag.Bool("week", false, "Show last week stats")
@@ -101,40 +79,39 @@ var maxResults = flag.Int("max-results", 15, "Number of results")
 var fullNames = flag.Bool("full-names", false, "Show full names (pretty or simple formatters only)")
 var maxNameLength = flag.Int("max-name-length", 75, "Maximum length of a name (pretty or simple formatters only)")
 
-
 func main() {
-    flag.Parse()
+	flag.Parse()
 
-    args := common.CmdArgs{ShowTodayStats: *showTodayStats,
-                           ShowYesterdayStats: *showYesterdayStats,
-                           ShowWeekStats: *showWeekStats,
-                           StartDate: *startDate,
-                           EndDate: *endDate,
-                           Formatter: *formatter,
-                           FilterByName: *filterByNameStr,
-                           FilterByWindow: *filterByWindowStr,
-                           GroupByWindow: *groupByWindow,
-                           MaxResults: *maxResults,
-                           FullNames: *fullNames,
-                           MaxNameLength: *maxNameLength}
+	appContext := common.CmdArgs{ShowTodayStats: *showTodayStats,
+		ShowYesterdayStats: *showYesterdayStats,
+		ShowWeekStats:      *showWeekStats,
+		StartDate:          *startDate,
+		EndDate:            *endDate,
+		Formatter:          *formatter,
+		FilterByName:       *filterByNameStr,
+		FilterByWindow:     *filterByWindowStr,
+		GroupByWindow:      *groupByWindow,
+		MaxResults:         *maxResults,
+		FullNames:          *fullNames,
+		MaxNameLength:      *maxNameLength}
 
-    if *daemon {
-        runDaemon()
-    }
+	if *daemon {
+		runDaemon()
+	}
 
-    if *showTodayStats {
-        stats.TodayStats(args)
-    }
+	if *showTodayStats {
+		stats.TodayStats(appContext)
+	}
 
-    if *showYesterdayStats {
-        stats.YesterdayStats(args)
-    }
+	if *showYesterdayStats {
+		stats.YesterdayStats(appContext)
+	}
 
-    if *showWeekStats {
-        stats.LastWeekStats(args)
-    }
+	if *showWeekStats {
+		stats.LastWeekStats(appContext)
+	}
 
-    if *startDate != "" || *endDate != "" {
-        stats.ShowForRange(args)
-    }
+	if *startDate != "" || *endDate != "" {
+		stats.ShowForRange(appContext)
+	}
 }
