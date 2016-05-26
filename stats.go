@@ -1,4 +1,4 @@
-package stats
+package main
 
 import (
 	"database/sql"
@@ -13,9 +13,6 @@ import (
 	"github.com/jinzhu/now"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/syohex/go-texttable"
-
-	"../common"
-	"../settings"
 )
 
 type appStats struct {
@@ -36,6 +33,13 @@ func (a AppStatsArray) Swap(i, j int) {
 
 func (a AppStatsArray) Less(i, j int) bool {
 	return a[i].RunningTime < a[j].RunningTime
+}
+
+func LastMonthStats(args common.CmdArgs) {
+	now.FirstDayMonday = true
+	monthBeginningTimestamp := strconv.FormatInt(now.BeginningOfMonth().Unix(), 10)
+	condition := fmt.Sprintf("startTime >= %s", monthBeginningTimestamp)
+	getStatsForCondition(condition, args)
 }
 
 func LastWeekStats(args common.CmdArgs) {
