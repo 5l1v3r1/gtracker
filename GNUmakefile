@@ -31,5 +31,5 @@ install-go-requirements:
 
 build:
 	make install-go-requirements
-	go build gtracker.go db.go common.go daemon.go stats.go
+	go build gtracker.go db.go daemon.go stats.go
 	chmod +x gtracker

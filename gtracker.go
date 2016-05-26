@@ -8,6 +8,7 @@ type CmdArgs struct {
 	ShowTodayStats     bool
 	ShowYesterdayStats bool
 	ShowWeekStats      bool
+	ShowMonthStats     bool
 	StartDate          string
 	EndDate            string
 	Formatter          string

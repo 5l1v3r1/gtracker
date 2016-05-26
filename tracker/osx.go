@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/alexander-akhmetov/gtracker"
+	"../common"
 )
 
 type TrackerOSX struct {
@@ -18,10 +18,10 @@ func (tracker TrackerOSX) GetCurrentAppInfo() (string, string) {
 }
 
 func (tracker TrackerOSX) getActiveApplication() string {
-	cmd := exec.Command(path.Join(gtracker.GetWorkDir(), "bin", "getFrontAppName"))
+	cmd := exec.Command(path.Join(common.GetWorkDir(), "bin", "getFrontAppName"))
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		gtracker.Log.Error(err)
+		common.Log.Error(err)
 		return ""
 	}
 	return strings.Replace(string(output), "\n", "", -1)
@@ -35,7 +35,7 @@ func (tracker TrackerOSX) runAppleScript(script string) (string, error) {
 	cmd := exec.Command("osascript", appleScriptArgs...)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		gtracker.Log.Error(err)
+		common.Log.Error(err)
 		return "", err
 	}
 	prettyOutput := strings.Replace(string(output), "\n", "", -1)
@@ -61,7 +61,14 @@ func (tracker TrackerOSX) IsLocked() bool {
 	}
 }
 
-func (tracker TrackerOSX) InitializeCurrentApp() gtracker.CurrentApp {
+func (tracker TrackerOSX) InitializeCurrentApp() common.CurrentApp {
 	appName, windowName := tracker.GetCurrentAppInfo()
-	return gtracker.CurrentApp{Name: appName, WindowName: windowName, RunningTime: 0, StartTime: time.Now().Unix()}
+	now := time.Now()
+	return common.CurrentApp{
+		Name:        appName,
+		WindowName:  windowName,
+		RunningTime: 0,
+		StartTime:   now.Unix(),
+		CurrentDate: now,
+	}
 }

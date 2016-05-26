@@ -1,5 +1,16 @@
 package main
 
+import (
+	"fmt"
+	"os"
+	"os/signal"
+	"runtime"
+	"time"
+
+	"./common"
+	"./tracker"
+)
+
 func runDaemon() {
 	tracker := getTrackerForCurrentOS()
 	currentApp := tracker.InitializeCurrentApp()
@@ -9,33 +20,34 @@ func runDaemon() {
 	signal.Notify(signalChan, os.Interrupt)
 	go func() {
 		for _ = range signalChan {
-			Log.Info("Received an interrupt, stopping...")
-			common.SaveAppInfo(currentApp)
+			common.Log.Info("Received an interrupt, stopping...")
+			SaveAppInfo(currentApp)
 			os.Exit(0)
 		}
 	}()
 
-	Log.Info("Daemon started")
+	common.Log.Info("Daemon started")
 	for true {
 		if tracker.IsLocked() == false {
 			appName, windowName := tracker.GetCurrentAppInfo()
-			if (currentApp.Name != appName) || (currentApp.WindowName != windowName) {
-				// new active app
-				common.SaveAppInfo(currentApp)
+			now := time.Now() // сохраняем информацию если наступил следующий день
+			if (currentApp.Name != appName) || (currentApp.WindowName != windowName) || (now.Weekday() != currentApp.CurrentDate.Weekday()) {
+				// new active app or new day
+				SaveAppInfo(currentApp)
 				currentApp.RunningTime = 1
 				currentApp.StartTime = time.Now().Unix()
 			} else {
 				currentApp.RunningTime += 1
 			}
 			currentApp.Name, currentApp.WindowName = appName, windowName
-			Log.Info(fmt.Sprintf(
+			common.Log.Info(fmt.Sprintf(
 				"App=\"%s\"    Window=\"%s\"    Running=%vs",
 				currentApp.Name,
 				currentApp.WindowName,
 				currentApp.RunningTime,
 			))
 		} else {
-			Log.Info("Locked")
+			common.Log.Info("Locked")
 		}
 		time.Sleep(time.Second)
 	}

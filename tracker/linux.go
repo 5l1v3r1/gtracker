@@ -9,7 +9,8 @@ import (
 	"github.com/BurntSushi/xgb/screensaver"
 	"github.com/BurntSushi/xgb/xproto"
 	"github.com/BurntSushi/xgbutil/xprop"
-	"github.com/alexander-akhmetov/gtracker"
+
+	"../common"
 )
 
 type TrackerLinux struct {
@@ -42,7 +43,7 @@ func (tracker TrackerLinux) getX11WindowValue(name string) string {
 	reply, err := xproto.GetProperty(X, false, windowId, nameAtom.Atom,
 		xproto.GetPropertyTypeAny, 0, (1<<32)-1).Reply()
 	if err != nil {
-		gtracker.Log.Info(err)
+		common.Log.Info(err)
 		return "unknown"
 	}
 	if name == "WM_CLASS" {
@@ -57,7 +58,7 @@ func (tracker TrackerLinux) getX11WindowValue(name string) string {
 
 func (tracker TrackerLinux) IsLocked() bool {
 	idle, err := tracker.getIdleTime()
-	gtracker.CheckError(err)
+	common.CheckError(err)
 	if idle > 10000 {
 		return true
 	} else {
@@ -71,21 +72,28 @@ func (tracker TrackerLinux) getIdleTime() (uint32, error) {
 
 	reply, err := screensaver.QueryInfo(X, screenRoot).Reply()
 	if err != nil {
-		gtracker.Log.Error(err)
+		common.Log.Error(err)
 		return 0, err
 	}
 	return reply.MsSinceUserInput, nil
 }
 
-func (tracker TrackerLinux) InitializeCurrentApp() gtracker.CurrentApp {
+func (tracker TrackerLinux) InitializeCurrentApp() common.CurrentApp {
 	appName, windowName := tracker.GetCurrentAppInfo()
-	return gtracker.CurrentApp{Name: appName, WindowName: windowName, RunningTime: 0, StartTime: time.Now().Unix()}
+	now := time.Now()
+	return common.CurrentApp{
+		Name:        appName,
+		WindowName:  windowName,
+		RunningTime: 0,
+		StartTime:   now.Unix(),
+		CurrentDate: now,
+	}
 }
 
 func (tracker TrackerLinux) init() {
 	if runtime.GOOS == "linux" {
 		var err error
 		X, err = xgb.NewConn()
-		gtracker.CheckError(err)
+		common.CheckError(err)
 	}
 }

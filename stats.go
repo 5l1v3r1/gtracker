@@ -9,10 +9,13 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/jinzhu/now"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/syohex/go-texttable"
+
+	"./common"
 )
 
 type appStats struct {
@@ -35,39 +38,56 @@ func (a AppStatsArray) Less(i, j int) bool {
 	return a[i].RunningTime < a[j].RunningTime
 }
 
-func LastMonthStats(args common.CmdArgs) {
+func LastMonthStats(args CmdArgs) {
 	now.FirstDayMonday = true
 	monthBeginningTimestamp := strconv.FormatInt(now.BeginningOfMonth().Unix(), 10)
 	condition := fmt.Sprintf("startTime >= %s", monthBeginningTimestamp)
 	getStatsForCondition(condition, args)
 }
 
-func LastWeekStats(args common.CmdArgs) {
+func LastWeekStats(args CmdArgs) {
 	now.FirstDayMonday = true
 	weekBeginningTimestamp := strconv.FormatInt(now.BeginningOfWeek().Unix(), 10)
 	condition := fmt.Sprintf("startTime >= %s", weekBeginningTimestamp)
 	getStatsForCondition(condition, args)
 }
 
-func TodayStats(args common.CmdArgs) {
+func TodayStats(args CmdArgs) {
 	todayBeginningTimestamp := strconv.FormatInt(now.BeginningOfDay().Unix(), 10)
 	condition := fmt.Sprintf("startTime >= %s", todayBeginningTimestamp)
 	getStatsForCondition(condition, args)
 }
 
-func YesterdayStats(args common.CmdArgs) {
+func YesterdayStats(args CmdArgs) {
 	todayBeginningTimestamp := strconv.FormatInt(now.BeginningOfDay().Unix(), 10)
 	yesterdayBeginningTimestamp := strconv.FormatInt(now.BeginningOfDay().Unix()-24*60*60, 10)
 	condition := fmt.Sprintf("startTime >= %s AND endTime <= %s", yesterdayBeginningTimestamp, todayBeginningTimestamp)
 	getStatsForCondition(condition, args)
 }
 
-func ShowForRange(args common.CmdArgs) {
+func ShowForRange(args CmdArgs) {
 	parsedStartDate, startDateError := now.Parse(args.StartDate)
 	parsedEndDate, endDateError := now.Parse(args.EndDate)
 	if startDateError != nil && endDateError != nil {
 		log.Fatal("Error parsing time range")
 	}
+	condition := getCondition(parsedStartDate, startDateError, parsedEndDate, endDateError)
+	if !args.GroupByDay {
+		getStatsForCondition(condition, args)
+	} else {
+		for {
+			condition = getCondition(parsedStartDate, startDateError, parsedEndDate, endDateError)
+			getStatsForCondition(condition, args)
+			if parsedStartDate.After(parsedEndDate.Add(time.Hour * 24 * -1)) {
+				getStatsForCondition(condition, args)
+				break
+			}
+			parsedEndDate = parsedEndDate.Add(time.Hour * 24 * -1)
+		}
+	}
+}
+
+func getCondition(parsedStartDate time.Time, startDateError error, parsedEndDate time.Time, endDateError error) string {
 	condition := ""
 	if startDateError == nil {
 		condition = fmt.Sprintf("startTime >= %s", strconv.FormatInt(parsedStartDate.Unix(), 10))
@@ -78,11 +98,11 @@ func ShowForRange(args common.CmdArgs) {
 	if endDateError == nil {
 		condition = fmt.Sprintf("%s endTime <= %s", condition, strconv.FormatInt(parsedEndDate.Unix(), 10))
 	}
-	getStatsForCondition(condition, args)
+	return condition
 }
 
-func getStatsForCondition(whereCondition string, args common.CmdArgs) {
-	db, err := sql.Open("sqlite3", path.Join(common.GetWorkDir(), settings.DatabaseName))
+func getStatsForCondition(whereCondition string, args CmdArgs) {
+	db, err := sql.Open("sqlite3", path.Join(common.GetWorkDir(), databaseName))
 	defer db.Close()
 	groupKey := "name"
 	if args.GroupByWindow {

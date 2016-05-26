@@ -6,21 +6,16 @@ import (
 	"time"
 
 	_ "github.com/mattn/go-sqlite3"
+
+	"./common"
 )
 
 const databaseName = "data.db"
 
-type CurrentApp struct {
-	Name        string
-	WindowName  string
-	RunningTime int
-	StartTime   int64
-}
-
 func initDatabase() {
-	db, err := sql.Open("sqlite3", path.Join(GetWorkDir(), databaseName))
+	db, err := sql.Open("sqlite3", path.Join(common.GetWorkDir(), databaseName))
 	defer db.Close()
-	CheckError(err)
+	common.CheckError(err)
 	query := `CREATE TABLE apps (id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
                                  name TEXT,
                                  windowName TEXT,
@@ -30,15 +25,15 @@ func initDatabase() {
 	_, _ = db.Exec(query)
 }
 
-func SaveAppInfo(app CurrentApp) {
-	db, err := sql.Open("sqlite3", path.Join(GetWorkDir(), databaseName))
+func SaveAppInfo(app common.CurrentApp) {
+	db, err := sql.Open("sqlite3", path.Join(common.GetWorkDir(), databaseName))
 	defer db.Close()
-	CheckError(err)
+	common.CheckError(err)
 	tx, err := db.Begin()
-	CheckError(err)
+	common.CheckError(err)
 	query, _ := tx.Prepare(`INSERT INTO apps(name, windowName, runningTime, startTime, endTime) VALUES(?, ?, ?, ?, ?)`)
 	defer query.Close()
-	CheckError(err)
+	common.CheckError(err)
 	_, _ = query.Exec(app.Name, app.WindowName, app.RunningTime, app.StartTime, time.Now().Unix())
 	tx.Commit()
 }
