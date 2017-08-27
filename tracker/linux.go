@@ -10,37 +10,37 @@ import (
 	"github.com/BurntSushi/xgb/xproto"
 	"github.com/BurntSushi/xgbutil/xprop"
 
-	"../common"
+	"bitbucket.org/oboroten/gtracker/common"
 )
 
-type TrackerLinux struct {
-}
+// Linux is tracker for Linux OS
+type Linux struct{}
 
-var X *xgb.Conn
+var x *xgb.Conn
 
-func (tracker TrackerLinux) GetCurrentAppInfo() (string, string) {
+func (tracker Linux) GetCurrentAppInfo() (string, string) {
 	appName := tracker.getActiveApp()
 	windowName := tracker.getActiveWindow()
 	return appName, windowName
 }
 
-func (tracker TrackerLinux) getActiveWindow() string {
+func (tracker Linux) getActiveWindow() string {
 	return tracker.getX11WindowValue("_NET_WM_NAME")
 }
 
-func (tracker TrackerLinux) getActiveApp() string {
+func (tracker Linux) getActiveApp() string {
 	return tracker.getX11WindowValue("WM_CLASS")
 }
 
-func (tracker TrackerLinux) getX11WindowValue(name string) string {
-	setup := xproto.Setup(X)
-	root := setup.DefaultScreen(X).Root
-	activeAtom, _ := xproto.InternAtom(X, true, uint16(len("_NET_ACTIVE_WINDOW")), "_NET_ACTIVE_WINDOW").Reply()
-	nameAtom, _ := xproto.InternAtom(X, true, uint16(len(name)), name).Reply()
-	reply, _ := xproto.GetProperty(X, false, root, activeAtom.Atom, xproto.GetPropertyTypeAny, 0, (1<<32)-1).Reply()
-	windowId := xproto.Window(xgb.Get32(reply.Value))
+func (tracker Linux) getX11WindowValue(name string) string {
+	setup := xproto.Setup(x)
+	root := setup.DefaultScreen(x).Root
+	activeAtom, _ := xproto.InternAtom(x, true, uint16(len("_NET_ACTIVE_WINDOW")), "_NET_ACTIVE_WINDOW").Reply()
+	nameAtom, _ := xproto.InternAtom(x, true, uint16(len(name)), name).Reply()
+	reply, _ := xproto.GetProperty(x, false, root, activeAtom.Atom, xproto.GetPropertyTypeAny, 0, (1<<32)-1).Reply()
+	windowID := xproto.Window(xgb.Get32(reply.Value))
 
-	reply, err := xproto.GetProperty(X, false, windowId, nameAtom.Atom,
+	reply, err := xproto.GetProperty(x, false, windowID, nameAtom.Atom,
 		xproto.GetPropertyTypeAny, 0, (1<<32)-1).Reply()
 	if err != nil {
 		common.Log.Info(err)
@@ -56,21 +56,22 @@ func (tracker TrackerLinux) getX11WindowValue(name string) string {
 	return fmt.Sprintf("%s", reply.Value)
 }
 
-func (tracker TrackerLinux) IsLocked() bool {
+func (tracker Linux) IsLocked() bool {
 	idle, err := tracker.getIdleTime()
 	common.CheckError(err)
+
 	if idle > 10000 {
 		return true
-	} else {
-		return false
 	}
+
+	return false
 }
 
-func (tracker TrackerLinux) getIdleTime() (uint32, error) {
-	screensaver.Init(X)
-	screenRoot := xproto.Drawable(xproto.Setup(X).DefaultScreen(X).Root)
+func (tracker Linux) getIdleTime() (uint32, error) {
+	screensaver.Init(x)
+	screenRoot := xproto.Drawable(xproto.Setup(x).DefaultScreen(x).Root)
 
-	reply, err := screensaver.QueryInfo(X, screenRoot).Reply()
+	reply, err := screensaver.QueryInfo(x, screenRoot).Reply()
 	if err != nil {
 		common.Log.Error(err)
 		return 0, err
@@ -78,7 +79,7 @@ func (tracker TrackerLinux) getIdleTime() (uint32, error) {
 	return reply.MsSinceUserInput, nil
 }
 
-func (tracker TrackerLinux) InitializeCurrentApp() common.CurrentApp {
+func (tracker Linux) InitializeCurrentApp() common.CurrentApp {
 	appName, windowName := tracker.GetCurrentAppInfo()
 	now := time.Now()
 	return common.CurrentApp{
@@ -90,10 +91,10 @@ func (tracker TrackerLinux) InitializeCurrentApp() common.CurrentApp {
 	}
 }
 
-func (tracker TrackerLinux) init() {
+func (tracker Linux) init() {
 	if runtime.GOOS == "linux" {
 		var err error
-		X, err = xgb.NewConn()
+		x, err = xgb.NewConn()
 		common.CheckError(err)
 	}
 }

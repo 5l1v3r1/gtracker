@@ -4,7 +4,7 @@ import (
 	"flag"
 )
 
-type CmdArgs struct {
+type cmdArgs struct {
 	ShowTodayStats     bool
 	ShowYesterdayStats bool
 	ShowWeekStats      bool
@@ -42,7 +42,7 @@ var groupByDay = flag.Bool("group-by-day", false, "Group stats by day")
 func main() {
 	flag.Parse()
 
-	appContext := CmdArgs{ShowTodayStats: *showTodayStats,
+	appContext := cmdArgs{ShowTodayStats: *showTodayStats,
 		ShowYesterdayStats: *showYesterdayStats,
 		ShowWeekStats:      *showWeekStats,
 		ShowMonthStats:     *showMonthStats,
@@ -63,22 +63,22 @@ func main() {
 	}
 
 	if *showTodayStats {
-		TodayStats(appContext)
+		todayStats(appContext)
 	}
 
 	if *showYesterdayStats {
-		YesterdayStats(appContext)
+		yesterdayStats(appContext)
 	}
 
 	if *showWeekStats {
-		LastWeekStats(appContext)
+		lastWeekStats(appContext)
 	}
 
 	if *showMonthStats {
-		LastMonthStats(appContext)
+		lastMonthStats(appContext)
 	}
 
 	if *startDate != "" || *endDate != "" {
-		ShowForRange(appContext)
+		showForRange(appContext)
 	}
 }

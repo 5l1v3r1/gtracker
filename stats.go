@@ -15,7 +15,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/syohex/go-texttable"
 
-	"./common"
+	"bitbucket.org/oboroten/gtracker/common"
 )
 
 type appStats struct {
@@ -24,48 +24,48 @@ type appStats struct {
 	Percentage  float64
 }
 
-type AppStatsArray []appStats
+type appStatsArray []appStats
 
-func (a AppStatsArray) Len() int {
+func (a appStatsArray) Len() int {
 	return len(a)
 }
 
-func (a AppStatsArray) Swap(i, j int) {
+func (a appStatsArray) Swap(i, j int) {
 	a[i], a[j] = a[j], a[i]
 }
 
-func (a AppStatsArray) Less(i, j int) bool {
+func (a appStatsArray) Less(i, j int) bool {
 	return a[i].RunningTime < a[j].RunningTime
 }
 
-func LastMonthStats(args CmdArgs) {
+func lastMonthStats(args cmdArgs) {
 	now.FirstDayMonday = true
 	monthBeginningTimestamp := strconv.FormatInt(now.BeginningOfMonth().Unix(), 10)
 	condition := fmt.Sprintf("startTime >= %s", monthBeginningTimestamp)
 	getStatsForCondition(condition, args)
 }
 
-func LastWeekStats(args CmdArgs) {
+func lastWeekStats(args cmdArgs) {
 	now.FirstDayMonday = true
 	weekBeginningTimestamp := strconv.FormatInt(now.BeginningOfWeek().Unix(), 10)
 	condition := fmt.Sprintf("startTime >= %s", weekBeginningTimestamp)
 	getStatsForCondition(condition, args)
 }
 
-func TodayStats(args CmdArgs) {
+func todayStats(args cmdArgs) {
 	todayBeginningTimestamp := strconv.FormatInt(now.BeginningOfDay().Unix(), 10)
 	condition := fmt.Sprintf("startTime >= %s", todayBeginningTimestamp)
 	getStatsForCondition(condition, args)
 }
 
-func YesterdayStats(args CmdArgs) {
+func yesterdayStats(args cmdArgs) {
 	todayBeginningTimestamp := strconv.FormatInt(now.BeginningOfDay().Unix(), 10)
 	yesterdayBeginningTimestamp := strconv.FormatInt(now.BeginningOfDay().Unix()-24*60*60, 10)
 	condition := fmt.Sprintf("startTime >= %s AND endTime <= %s", yesterdayBeginningTimestamp, todayBeginningTimestamp)
 	getStatsForCondition(condition, args)
 }
 
-func ShowForRange(args CmdArgs) {
+func showForRange(args cmdArgs) {
 	parsedStartDate, startDateError := now.Parse(args.StartDate)
 	parsedEndDate, endDateError := now.Parse(args.EndDate)
 	if startDateError != nil && endDateError != nil {
@@ -101,7 +101,7 @@ func getCondition(parsedStartDate time.Time, startDateError error, parsedEndDate
 	return condition
 }
 
-func getStatsForCondition(whereCondition string, args CmdArgs) {
+func getStatsForCondition(whereCondition string, args cmdArgs) {
 	db, err := sql.Open("sqlite3", path.Join(common.GetWorkDir(), databaseName))
 	defer db.Close()
 	groupKey := "name"
@@ -142,7 +142,7 @@ func getStatsForCondition(whereCondition string, args CmdArgs) {
 		"simple": statsSimplePrinter,
 		"json":   statsJsonPrinter,
 	}
-	sort.Sort(sort.Reverse(AppStatsArray(statsArray)))
+	sort.Sort(sort.Reverse(appStatsArray(statsArray)))
 	if len(statsArray) < args.MaxResults {
 		args.MaxResults = len(statsArray)
 	}

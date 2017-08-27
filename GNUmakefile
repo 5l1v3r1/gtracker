@@ -3,13 +3,13 @@ WORKDIR=/Users/$(shell whoami)/.gtracker/bin/
 
 install:
 	make build
-	make install-osx
+	make install-MacOS
 
-install-osx:
+install-MacOS:
 	sed "s@\[whoami\]@$(shell whoami)@" com.akhmetov.gtracker.launchd.plist.template > com.akhmetov.gtracker.launchd.plist
 	cp com.akhmetov.gtracker.launchd.plist /Users/$(shell whoami)/Library/LaunchAgents/com.akhmetov.gtracker.launchd.plist
 
-	mkdir -p $(WORKDIR)/osx
+	mkdir -p $(WORKDIR)/MacOS
 	cp gtracker $(WORKDIR)
 	cp tracker/getFrontAppName $(WORKDIR)/
 	chmod +x $(WORKDIR)gtracker
@@ -25,7 +25,7 @@ install-go-requirements:
 	"github.com/mattn/go-sqlite3" \
 	"github.com/syohex/go-texttable" \
 	"github.com/jinzhu/now" \
-	"github.com/Sirupsen/logrus" \
+	"github.com/sirupsen/logrus" \
 	"github.com/rifflock/lfshook"
 
 

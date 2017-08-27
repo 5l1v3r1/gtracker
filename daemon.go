@@ -7,8 +7,8 @@ import (
 	"runtime"
 	"time"
 
-	"./common"
-	"./tracker"
+	"bitbucket.org/oboroten/gtracker/common"
+	"bitbucket.org/oboroten/gtracker/tracker"
 )
 
 func runDaemon() {
@@ -21,7 +21,7 @@ func runDaemon() {
 	go func() {
 		for _ = range signalChan {
 			common.Log.Info("Received an interrupt, stopping...")
-			SaveAppInfo(currentApp)
+			saveAppInfo(currentApp)
 			os.Exit(0)
 		}
 	}()
@@ -30,14 +30,17 @@ func runDaemon() {
 	for true {
 		if tracker.IsLocked() == false {
 			appName, windowName := tracker.GetCurrentAppInfo()
-			now := time.Now() // сохраняем информацию если наступил следующий день
-			if (currentApp.Name != appName) || (currentApp.WindowName != windowName) || (now.Weekday() != currentApp.CurrentDate.Weekday()) {
+			now := time.Now()
+			// сохраняем информацию если наступил следующий день
+			// или если сменилось окно
+			// или текущее запущено больше 10 секунд
+			if (currentApp.Name != appName) || (currentApp.WindowName != windowName) || (now.Weekday() != currentApp.CurrentDate.Weekday() || currentApp.RunningTime > 10) {
 				// new active app or new day
-				SaveAppInfo(currentApp)
+				saveAppInfo(currentApp)
 				currentApp.RunningTime = 1
 				currentApp.StartTime = time.Now().Unix()
 			} else {
-				currentApp.RunningTime += 1
+				currentApp.RunningTime++
 			}
 			currentApp.Name, currentApp.WindowName = appName, windowName
 			common.Log.Info(fmt.Sprintf(
@@ -55,8 +58,8 @@ func runDaemon() {
 
 func getTrackerForCurrentOS() tracker.Tracker {
 	if runtime.GOOS == "linux" {
-		return tracker.TrackerLinux{}
+		return tracker.Linux{}
 	}
 
-	return tracker.TrackerOSX{}
+	return tracker.MacOS{}
 }

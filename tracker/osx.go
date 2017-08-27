@@ -7,17 +7,17 @@ import (
 	"strings"
 	"time"
 
-	"../common"
+	"bitbucket.org/oboroten/gtracker/common"
 )
 
-type TrackerOSX struct {
-}
+// MacOS is tracker For MacOS
+type MacOS struct{}
 
-func (tracker TrackerOSX) GetCurrentAppInfo() (string, string) {
+func (tracker MacOS) GetCurrentAppInfo() (string, string) {
 	return tracker.getActiveApplication(), ""
 }
 
-func (tracker TrackerOSX) getActiveApplication() string {
+func (tracker MacOS) getActiveApplication() string {
 	cmd := exec.Command(path.Join(common.GetWorkDir(), "bin", "getFrontAppName"))
 	output, err := cmd.CombinedOutput()
 	if err != nil {
@@ -27,7 +27,7 @@ func (tracker TrackerOSX) getActiveApplication() string {
 	return strings.Replace(string(output), "\n", "", -1)
 }
 
-func (tracker TrackerOSX) runAppleScript(script string) (string, error) {
+func (tracker MacOS) runAppleScript(script string) (string, error) {
 	appleScriptArgs := []string{}
 	for _, line := range strings.Split(script, "\n") {
 		appleScriptArgs = append(appleScriptArgs, "-e", line)
@@ -42,8 +42,8 @@ func (tracker TrackerOSX) runAppleScript(script string) (string, error) {
 	return prettyOutput, err
 }
 
-func (tracker TrackerOSX) IsLocked() bool {
-	isLockedAppleScript := `tell application "System Events"
+func (tracker MacOS) IsLocked() bool {
+	IsLockedAppleScript := `tell application "System Events"
       tell screen saver preferences
         if running then
             return true
@@ -52,16 +52,16 @@ func (tracker TrackerOSX) IsLocked() bool {
     end tell
     return false`
 
-	isLockedString, _ := tracker.runAppleScript(isLockedAppleScript)
-	isLocked, err := strconv.ParseBool(isLockedString)
+	IsLockedString, _ := tracker.runAppleScript(IsLockedAppleScript)
+	IsLocked, err := strconv.ParseBool(IsLockedString)
 	if err != nil {
 		return false
 	} else {
-		return isLocked
+		return IsLocked
 	}
 }
 
-func (tracker TrackerOSX) InitializeCurrentApp() common.CurrentApp {
+func (tracker MacOS) InitializeCurrentApp() common.CurrentApp {
 	appName, windowName := tracker.GetCurrentAppInfo()
 	now := time.Now()
 	return common.CurrentApp{

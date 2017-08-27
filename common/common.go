@@ -1,13 +1,13 @@
 package common
 
 import (
+	"fmt"
 	"os"
 	"os/user"
 	"path"
 	"time"
 
-	"github.com/Sirupsen/logrus"
-	_ "github.com/mattn/go-sqlite3"
+	"github.com/sirupsen/logrus"
 )
 
 var Log = logrus.New()
@@ -27,8 +27,13 @@ func CheckError(err error) {
 }
 
 func GetWorkDir() string {
-	user, _ := user.Current()
+	user, err := user.Current()
+	CheckError(err)
 	return path.Join(user.HomeDir, ".gtracker/")
+}
+
+func GetPathToFile(filename string) string {
+	return path.Join(GetWorkDir(), filename)
 }
 
 func initWorkDirIfNeeded() {
@@ -37,4 +42,13 @@ func initWorkDirIfNeeded() {
 
 func init() {
 	initWorkDirIfNeeded()
+
+	pathToLog := GetPathToFile("gtracker.log")
+	file, err := os.OpenFile(pathToLog, os.O_CREATE|os.O_WRONLY, 0666)
+	if err == nil {
+		Log.Info(fmt.Sprintf("Using file '%s' to log", pathToLog))
+		Log.Out = file
+	} else {
+		Log.Info("Failed to log to file, using default stderr")
+	}
 }
