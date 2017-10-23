@@ -1,3 +1,4 @@
 com.akhmetov.gtracker.launchd.plist
+gtracker.log
 data.db
 gtracker
