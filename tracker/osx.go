@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"bitbucket.org/oboroten/gtracker/common"
+	"github.com/alexander-akhmetov/gtracker/common"
 )
 
 // MacOS is tracker For MacOS

@@ -1,6 +1,6 @@
 # Change Log
 gtracker - simple time tracker app.
-[Bitbucket](https://bitbucket.org/Oboroten/gtracker).
+[Bitbucket](https://github.com/alexander-akhmetov/gtracker).
 
 ## [0.0.2] - 2015-06-22
 ### Added

@@ -1,7 +1,7 @@
 package tracker
 
 import (
-	"bitbucket.org/oboroten/gtracker/common"
+	"github.com/alexander-akhmetov/gtracker/common"
 )
 
 type Tracker interface {

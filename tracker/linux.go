@@ -10,7 +10,7 @@ import (
 	"github.com/BurntSushi/xgb/xproto"
 	"github.com/BurntSushi/xgbutil/xprop"
 
-	"bitbucket.org/oboroten/gtracker/common"
+	"github.com/alexander-akhmetov/gtracker/common"
 )
 
 // Linux is tracker for Linux OS

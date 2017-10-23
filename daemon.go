@@ -7,8 +7,8 @@ import (
 	"runtime"
 	"time"
 
-	"bitbucket.org/oboroten/gtracker/common"
-	"bitbucket.org/oboroten/gtracker/tracker"
+	"github.com/alexander-akhmetov/gtracker/common"
+	"github.com/alexander-akhmetov/gtracker/tracker"
 )
 
 func runDaemon() {

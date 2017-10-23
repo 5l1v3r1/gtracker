@@ -15,7 +15,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/syohex/go-texttable"
 
-	"bitbucket.org/oboroten/gtracker/common"
+	"github.com/alexander-akhmetov/gtracker/common"
 )
 
 type appStats struct {

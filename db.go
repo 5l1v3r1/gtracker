@@ -6,7 +6,7 @@ import (
 
 	_ "github.com/mattn/go-sqlite3"
 
-	"bitbucket.org/oboroten/gtracker/common"
+	"github.com/alexander-akhmetov/gtracker/common"
 )
 
 const databaseName = "data.db"
