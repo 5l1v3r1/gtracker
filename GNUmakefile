@@ -19,7 +19,7 @@ install-MacOS:
 	launchctl load -w /Users/$(shell whoami)/Library/LaunchAgents/com.akhmetov.gtracker.launchd.plist
 
 install-go-requirements:
-	GOPATH=$(GOPATH) go get "github.com/BurntSushi/xgb" \
+	go get "github.com/BurntSushi/xgb" \
 	"github.com/BurntSushi/xgb/xproto" \
 	"github.com/BurntSushi/xgbutil/xprop" \
 	"github.com/mattn/go-sqlite3" \
@@ -30,6 +30,6 @@ install-go-requirements:
 
 
 build:
-	make install-go-requirements
-	go build gtracker.go db.go daemon.go stats.go
+	GOPATH=$(GOPATH) make install-go-requirements
+	GOPATH=$(GOPATH) go build gtracker.go db.go daemon.go stats.go
 	chmod +x gtracker
