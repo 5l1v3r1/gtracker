@@ -17,6 +17,8 @@ install-macos:
 	-launchctl unload -w /Users/$(WHOAMI)/Library/LaunchAgents/com.akhmetov.gtracker.launchd.plist
 	launchctl load -w /Users/$(WHOAMI)/Library/LaunchAgents/com.akhmetov.gtracker.launchd.plist
 
+	ln -s $(WORKDIR)bin/gtracker /usr/local/bin/gtracker
+
 uninstall-macos:
 	-launchctl unload -w /Users/$(WHOAMI)/Library/LaunchAgents/com.akhmetov.gtracker.launchd.plist
 	rm -f  /Users/$(WHOAMI)/Library/LaunchAgents/com.akhmetov.gtracker.launchd.plist
