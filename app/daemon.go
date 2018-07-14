@@ -15,7 +15,7 @@ import (
 
 func runDaemon() {
 	tracker := getTrackerForCurrentOS()
-	currentApp := tracker.InitializeCurrentApp()
+	currentApp := initializeCurrentApp(tracker)
 
 	// CTRL+C
 	signalChan := make(chan os.Signal, 1)
@@ -32,6 +32,18 @@ func runDaemon() {
 	for true {
 		currentApp = saveAppInfoIfNeeded(tracker, currentApp)
 		time.Sleep(time.Second)
+	}
+}
+
+func initializeCurrentApp(tracker tracker.Tracker) common.CurrentApp {
+	appName, windowName := tracker.GetCurrentAppInfo()
+	now := time.Now()
+	return common.CurrentApp{
+		Name:        appName,
+		WindowName:  windowName,
+		RunningTime: 0,
+		StartTime:   now.Unix(),
+		CurrentDate: now,
 	}
 }
 

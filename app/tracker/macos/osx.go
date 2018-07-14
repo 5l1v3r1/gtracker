@@ -5,7 +5,6 @@ import (
 	"path"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/alexander-akhmetov/gtracker/app/common"
 )
@@ -13,6 +12,7 @@ import (
 // MacOS is tracker For MacOS
 type MacOS struct{}
 
+// GetCurrentAppInfo returns common.CurrentApp instance with active application information
 func (tracker MacOS) GetCurrentAppInfo() (string, string) {
 	return tracker.getActiveApplication(), ""
 }
@@ -42,6 +42,7 @@ func (tracker MacOS) runAppleScript(script string) (string, error) {
 	return prettyOutput, err
 }
 
+// IsLocked returns boolean which indicates is computer locked or not
 func (tracker MacOS) IsLocked() bool {
 	IsLockedAppleScript := `tell application "System Events"
       tell screen saver preferences
@@ -56,19 +57,6 @@ func (tracker MacOS) IsLocked() bool {
 	IsLocked, err := strconv.ParseBool(IsLockedString)
 	if err != nil {
 		return false
-	} else {
-		return IsLocked
 	}
-}
-
-func (tracker MacOS) InitializeCurrentApp() common.CurrentApp {
-	appName, windowName := tracker.GetCurrentAppInfo()
-	now := time.Now()
-	return common.CurrentApp{
-		Name:        appName,
-		WindowName:  windowName,
-		RunningTime: 0,
-		StartTime:   now.Unix(),
-		CurrentDate: now,
-	}
+	return IsLocked
 }

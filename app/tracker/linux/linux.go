@@ -3,7 +3,6 @@ package linux
 import (
 	"fmt"
 	"runtime"
-	"time"
 
 	"github.com/BurntSushi/xgb"
 	"github.com/BurntSushi/xgb/screensaver"
@@ -18,6 +17,7 @@ type Linux struct{}
 
 var x *xgb.Conn
 
+// GetCurrentAppInfo returns common.CurrentApp instance with active application information
 func (tracker Linux) GetCurrentAppInfo() (string, string) {
 	appName := tracker.getActiveApp()
 	windowName := tracker.getActiveWindow()
@@ -56,6 +56,7 @@ func (tracker Linux) getX11WindowValue(name string) string {
 	return fmt.Sprintf("%s", reply.Value)
 }
 
+// IsLocked returns boolean which indicates is computer locked or not
 func (tracker Linux) IsLocked() bool {
 	idle, err := tracker.getIdleTime()
 	common.CheckError(err)
@@ -77,18 +78,6 @@ func (tracker Linux) getIdleTime() (uint32, error) {
 		return 0, err
 	}
 	return reply.MsSinceUserInput, nil
-}
-
-func (tracker Linux) InitializeCurrentApp() common.CurrentApp {
-	appName, windowName := tracker.GetCurrentAppInfo()
-	now := time.Now()
-	return common.CurrentApp{
-		Name:        appName,
-		WindowName:  windowName,
-		RunningTime: 0,
-		StartTime:   now.Unix(),
-		CurrentDate: now,
-	}
 }
 
 func (tracker Linux) init() {
