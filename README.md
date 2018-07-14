@@ -1,19 +1,26 @@
-gtracker
-================
+# gtracker
 
-Simple time tracker app.
+Simple app which automatically tracks how you use your computer
 
-
-
-##### TODO:
+## TODO
 
 * Installation instructions
 * Simple installation with `go get`
 * Refactoring
 
+## Installation
 
+`make install` (MacOS only) automatically installs the app to the home dir: `~/.gtracker/`
 
-you can run it as a daemon:
+If you want just to built it, run:
+
+```bash
+make build
+```
+
+## Usage
+
+As a daemon:
 
 ```bash
 gtracker --daemon
@@ -32,10 +39,12 @@ gtracker --today
 +--------------|------------+
 ```
 
-Usage:
-```
-./gtracker -h
-Usage of ./gtracker:
+Help:
+
+```bash
+gtracker -h
+
+Usage of gtracker:
     --daemon=false: Run tracking daemon
     --end-date="2017-01-01": Show stats to date
     --formatter="pretty": Formatter to use (simple, pretty)
