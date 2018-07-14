@@ -30,31 +30,52 @@ func runDaemon() {
 
 	common.Log.Info("Daemon started")
 	for true {
-		if tracker.IsLocked() == false {
-			appName, windowName := tracker.GetCurrentAppInfo()
-			now := time.Now()
-			// сохраняем информацию если наступил следующий день
-			// или если сменилось окно
-			// или текущее запущено больше 10 секунд
-			if (currentApp.Name != appName) || (currentApp.WindowName != windowName) || (now.Weekday() != currentApp.CurrentDate.Weekday() || currentApp.RunningTime > 10) {
-				// new active app or new day
-				saveAppInfo(currentApp)
-				currentApp.RunningTime = 1
-				currentApp.StartTime = time.Now().Unix()
-			} else {
-				currentApp.RunningTime++
-			}
-			currentApp.Name, currentApp.WindowName = appName, windowName
-			common.Log.Info(fmt.Sprintf(
-				"App=\"%s\"    Window=\"%s\"    Running=%vs",
-				currentApp.Name,
-				currentApp.WindowName,
-				currentApp.RunningTime,
-			))
-		} else {
-			common.Log.Info("Locked")
-		}
+		currentApp = saveAppInfoIfNeeded(tracker, currentApp)
 		time.Sleep(time.Second)
+	}
+}
+
+func saveAppInfoIfNeeded(tracker tracker.Tracker, oldAppInfo common.CurrentApp) common.CurrentApp {
+	if tracker.IsLocked() == false {
+		appName, windowName := tracker.GetCurrentAppInfo()
+
+		needToSaveAppInfo := isNeedToSaveAppInfo(appName, windowName, oldAppInfo)
+
+		if needToSaveAppInfo {
+			// new active app or new day
+			saveAppInfo(oldAppInfo)
+			oldAppInfo.RunningTime = 1
+			oldAppInfo.StartTime = time.Now().Unix()
+		} else {
+			oldAppInfo.RunningTime++
+		}
+		oldAppInfo.Name, oldAppInfo.WindowName = appName, windowName
+		common.Log.Info(fmt.Sprintf(
+			"Current app=\"%s\"    window=\"%s\"    running=%vsec",
+			oldAppInfo.Name,
+			oldAppInfo.WindowName,
+			oldAppInfo.RunningTime,
+		))
+	} else {
+		common.Log.Info("Computer is locked")
+	}
+	return oldAppInfo
+}
+
+func isNeedToSaveAppInfo(app string, window string, oldAppInfo common.CurrentApp) bool {
+	now := time.Now()
+
+	switch {
+	case app != oldAppInfo.Name:
+		return true
+	case window != oldAppInfo.WindowName:
+		return true
+	case now.Weekday() != oldAppInfo.CurrentDate.Weekday():
+		return true
+	case oldAppInfo.RunningTime > 10:
+		return true
+	default:
+		return false
 	}
 }
 
