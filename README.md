@@ -2,21 +2,17 @@
 
 Simple app which automatically tracks how you use your computer
 
-## TODO
-
-* Installation instructions
-* Simple installation with `go get`
-* Refactoring
-
 ## Installation
 
 `make install` (MacOS only) automatically installs the app to the home dir: `~/.gtracker/`
 
-If you want just to built it, run:
+If you want just to build it, run:
 
 ```bash
 make build
 ```
+
+And after in yout local directory you will have `gtracker` binary which you can already use.
 
 ## Usage
 
