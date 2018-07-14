@@ -1,4 +1,5 @@
 # gtracker
+[![Go Report Card](https://goreportcard.com/badge/github.com/alexander-akhmetov/gtracker)](https://goreportcard.com/report/github.com/alexander-akhmetov/gtracker)
 
 Simple app which automatically tracks how you use your computer
 
@@ -41,11 +42,34 @@ Help:
 gtracker -h
 
 Usage of gtracker:
-    --daemon=false: Run tracking daemon
-    --end-date="2017-01-01": Show stats to date
-    --formatter="pretty": Formatter to use (simple, pretty)
-    --start-date="2017-01-01": Show stats from date
-    --today: today's statistics
-    --week: Last week statistics
-    --yesterday: Yesterday's statistics
+  -daemon
+        Run tracking process
+  -end-date string
+        Show stats to specific date
+  -formatter string
+        Formatter to use: simple, pretty, json (default "pretty")
+  -full-names
+        Show full names ('pretty' or 'simple' formatters only)
+  -group-by-day
+        Group stats by day
+  -group-by-window
+        Group by window name
+  -max-name-length int
+        Maximum length of a name ('pretty' or 'simple' formatters only) (default 75)
+  -max-results int
+        Number of results (default 15)
+  -month
+        Show last month's stats
+  -name string
+        Filter by name
+  -start-date string
+        Show stats from specific date
+  -today
+        Show today's stats
+  -week
+        Show last week's stats
+  -window string
+        Filter by window
+  -yesterday
+        Show yesterday's stats
 ```
